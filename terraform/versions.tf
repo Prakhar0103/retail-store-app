@@ -10,9 +10,13 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 5.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0"
+    }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.0"
+      version = ">= 2.12"
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
@@ -38,16 +42,38 @@ provider "aws" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = module.retail_app_eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.retail_app_eks.cluster_certificate_authority_data)
-    exec {
+    exec = {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
       args        = ["eks", "get-token", "--cluster-name", module.retail_app_eks.cluster_name]
     }
   }
 }
+ 
+  provider "kubernetes" {
+    host                   = module.retail_app_eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.retail_app_eks.cluster_certificate_authority_data)
+    exec  {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.retail_app_eks.cluster_name]
+    }
+  }
+
+
+
+  # provider kubernetes {
+  #   host                   = module.retail_app_eks.cluster_endpoint
+  #   cluster_ca_certificate = base64decode(module.retail_app_eks.cluster_certificate_authority_data)
+  #   exec {
+  #     api_version = "client.authentication.k8s.io/v1beta1"
+  #     command     = "aws"
+  #     args        = ["eks", "get-token", "--cluster-name", module.retail_app_eks.cluster_name]
+  #   }
+  # }
 
 provider "kubectl" {
   host                   = module.retail_app_eks.cluster_endpoint
@@ -58,3 +84,12 @@ provider "kubectl" {
     args        = ["eks", "get-token", "--cluster-name", module.retail_app_eks.cluster_name]
   }
 }
+
+# # Helm provider configuration
+# provider "helm" {
+#   kubernetes {
+#     host                   = data.  .cluster.endpoint
+#     cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+#     token                  = data.aws_eks_cluster_auth.cluster.token
+#   }
+# }
